@@ -1,5 +1,4 @@
-import 'dart:ffi';
-import 'dart:ui';
+import 'dart:ffi' hide Size;
 import 'package:flutter/painting.dart';
 
 import 'package:ffi/ffi.dart';
@@ -36,6 +35,7 @@ Rect getScreenRectForWindow(int handle) {
 }
 
 class WinWindow extends WinDesktopWindow {
+  static final dpiAware = native.isDPIAware();
   int? handle;
   Size? _minSize;
   Size? _maxSize;
@@ -86,7 +86,9 @@ class WinWindow extends WinDesktopWindow {
 
   double systemMetric(int metric, {int dpiToUse = 0}) {
     final windowDpi = dpiToUse != 0 ? dpiToUse : this.dpi;
-    double result = GetSystemMetricsForDpi(metric, windowDpi).toDouble();
+    double result = dpiAware
+        ? GetSystemMetricsForDpi(metric, windowDpi).toDouble()
+        : GetSystemMetrics(metric).toDouble();
     return result;
   }
 
@@ -95,7 +97,7 @@ class WinWindow extends WinDesktopWindow {
   }
 
   int get dpi {
-    if (!isValidHandle(handle, "get dpi")) return 96;
+    if (!dpiAware || !isValidHandle(handle, "get dpi")) return 96;
     return GetDpiForWindow(handle!);
   }
 
